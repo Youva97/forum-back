@@ -19,7 +19,7 @@ const initServer = require("./services/server.service");
 
 async function init() {
   // Appeler initDatabase seulement si nécessaire
-  if (process.env.RUN_DATABASE_INIT === "true") {
+  if (process.env.RUN_DATABASE_INIT) {
     const initDatabase = require("./services/database.service");
     await initDatabase();
   }

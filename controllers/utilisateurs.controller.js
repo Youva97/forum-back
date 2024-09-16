@@ -49,7 +49,7 @@ module.exports = function (app) {
       const { nom, prenom, telephone, email, motDePasse } = req.body;
 
       if (!nom || !prenom || !telephone || !email || !motDePasse) {
-        return res.status(400).json({
+        return res.json({
           data: null,
           error: "Tous les champs sont requis",
         });
@@ -73,26 +73,22 @@ module.exports = function (app) {
         });
       }
 
-      // Étape 3 : Hashage du mot de passe
-      const saltRounds = 10; // Le nombre de rounds pour le salt
-      const hashedPassword = await bcrypt.hash(motDePasse, saltRounds);
-
-      // Étape 4 : Création de l'utilisateur dans la base de données
+      // Étape 3 : Création de l'utilisateur dans la base de données
       const utilisateur = await Utilisateur.create({
         nom,
         prenom,
         telephone,
         email,
-        motDePasse: hashedPassword, // Utiliser le mot de passe hashé
+        motDePasse,
       });
 
-      // Étape 5 : Réponse en cas de succès
+      // Étape 4 : Réponse en cas de succès
       return res.status(201).json({
         data: utilisateur,
         error: null,
       });
     } catch (error) {
-      // Étape 6 : Gestion des erreurs spécifiques
+      // Étape 5 : Gestion des erreurs spécifiques
       if (error.name === "SequelizeUniqueConstraintError") {
         return res.status(400).json({
           data: null,
@@ -118,7 +114,7 @@ module.exports = function (app) {
 
     // Vérification de l'email et du mot de passe
     if (!email || !motDePasse) {
-      return res.status(400).json({
+      return res.json({
         data: null,
         message: "Veuillez fournir une adresse email et un mot de passe.",
         error: true,
@@ -131,21 +127,21 @@ module.exports = function (app) {
 
       if (!utilisateur) {
         // Si l'utilisateur n'est pas trouvé
-        return res.status(404).json({
+        return res.json({
           data: null,
           message: "Email ou mot de passe incorrect.",
           error: true,
         });
       }
 
-      const motDePasseValide = await bcrypt.compare(
+      const motDePasseValide = bcrypt.compareSync(
         motDePasse,
         utilisateur.motDePasse
       );
 
-      // Comparaison directe du mot de passe (sans bcrypt pour l'instant)
       if (!motDePasseValide) {
-        return res.status(401).json({
+        console.log("Mot de passe incorrect.");
+        return res.json({
           data: null,
           message: "Email ou mot de passe incorrect.",
           error: true,
@@ -153,7 +149,7 @@ module.exports = function (app) {
       }
 
       // Génération du token JWT
-      const token = jwt.sign(
+      const token = jwtCrypto.sign(
         {
           id: utilisateur.id,
           email: utilisateur.email,
